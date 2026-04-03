@@ -69,3 +69,93 @@ export default function DashboardScreen() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#212121',
+    marginTop: 40,
+    marginBottom: 4,
+  },
+  week: {
+    fontSize: 14,
+    color: '#757575',
+    marginBottom: 16,
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  row: {
+    fontSize: 16,
+    color: '#212121',
+    marginBottom: 8,
+  },
+  progressTrack: {
+    height: 12,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 6,
+  },
+  progressLabel: {
+    fontSize: 14,
+    color: '#757575',
+    textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#212121',
+    marginBottom: 12,
+  },
+  txnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  txnMerchant: {
+    fontSize: 16,
+    color: '#212121',
+  },
+  txnAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  warning: {
+    color: '#fb8c00',
+    fontSize: 14,
+    marginTop: 8,
+  },
+  danger: {
+    color: '#e53935',
+    fontSize: 14,
+    marginTop: 8,
+  },
+  success: {
+    color: '#43a047',
+    fontSize: 14,
+    marginTop: 8,
+  },
+  empty: {
+    color: '#9e9e9e',
+    fontSize: 14,
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
+});
