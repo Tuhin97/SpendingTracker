@@ -1,20 +1,26 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import AppNavigator from './src/navigation/AppNavigator';
+import { parseNotification } from './src/utils/notificationParser';
+import { useTransactions } from './src/hooks/useTransactions';
+import * as Notifications from 'expo-notifications';
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+  const { addTransaction } = useTransactions();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      const text = notification.request.content.body ?? '';
+      const parsed = parseNotification({ 
+        text, 
+        time: Date.now() 
+      });
+      if (parsed.valid) {
+        addTransaction(parsed);
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  return <AppNavigator />;
+}
