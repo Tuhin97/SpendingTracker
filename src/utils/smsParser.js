@@ -5,9 +5,8 @@
 export function parseSms(sms) {
   const body = sms.body ?? '';
 
-  if (body.toLowerCase().includes('credited')) {
-    return { valid: false };
-  }
+  const isCredit = body.toLowerCase().includes('credited');
+
   const amountMatch = sms.body?.match(/\$([\d,]+(?:\.\d{1,2})?)/i);
   const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
 
@@ -21,8 +20,9 @@ export function parseSms(sms) {
 
    return {
     valid: true,
+    type: isCredit ? 'credit' : 'debit',
     amount,
-    merchant,
+    merchant: isCredit ? (merchantMatch?.[1]?.trim() ?? 'Unknown Credit') : merchant,
     date: new Date(sms.date).toISOString(),
     id: String(sms.date),
     raw: body,
