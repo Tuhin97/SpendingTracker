@@ -46,10 +46,18 @@ export function useTransactions() {
       .reduce((total, txn) => total + txn.amount, 0);
   }
 
+  function getWeeklyCredits() {
+    const lastTuesday = getLastTuesday();
+    return transactions
+      .filter(txn => txn.type === 'credit')
+      .filter(txn => new Date(txn.date) >= lastTuesday)
+      .reduce((total, txn) => total + txn.amount, 0);
+  }
+
   async function archiveAndReset() {
     const lastTuesday = getLastTuesday();
     const weekLabel = lastTuesday.toISOString().split('T')[0];
-    
+
     const weekData = {
       weekStarting: weekLabel,
       totalSpent: getWeeklyTotal(),
