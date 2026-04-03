@@ -3,11 +3,14 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { parseNotification } from './src/utils/notificationParser';
 import { useTransactions } from './src/hooks/useTransactions';
 import * as Notifications from 'expo-notifications';
+import { registerBackgroundTask } from './src/utils/backgroundTask';
 
 export default function App() {
   const { addTransaction } = useTransactions();
 
   useEffect(() => {
+    registerBackgroundTask();
+
     const subscription = Notifications.addNotificationReceivedListener(notification => {
       const text = notification.request.content.body ?? '';
       const parsed = parseNotification({ 
