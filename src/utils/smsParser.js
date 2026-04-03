@@ -7,7 +7,7 @@ export function parseSms(sms) {
 
   const isCredit = body.toLowerCase().includes('credited');
 
-  const amountMatch = sms.body?.match(/\$([\d,]+(?:\.\d{1,2})?)/i);
+  const amountMatch = body.match(/\$(\d{1,6}(?:,\d{3})*(?:\.\d{1,2})?)/);
   const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
 
   if (!amount) {
