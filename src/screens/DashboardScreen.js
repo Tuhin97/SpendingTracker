@@ -16,6 +16,13 @@ export default function DashboardScreen() {
   const progress = limit ? (weeklySpent / limit) * 100 : 0;
   const recentTransactions = transactions.slice(0, 5);
 
+  useFocusEffect(
+    useCallback(() => {
+      // screen is focused, data refreshes automatically
+      // because hooks re-read from AsyncStorage
+    }, [])
+  );
+
     return (
     <ScrollView style={styles.container}>
       
