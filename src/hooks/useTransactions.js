@@ -46,7 +46,7 @@ export function useTransactions() {
       .reduce((total, txn) => total + txn.amount, 0);
   }
 
-    async function archiveAndReset() {
+  async function archiveAndReset() {
     const lastTuesday = getLastTuesday();
     const weekLabel = lastTuesday.toISOString().split('T')[0];
     
