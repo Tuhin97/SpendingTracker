@@ -16,11 +16,19 @@ export function parseNotification(notification) {
     const merchantMatch = body.match(/spent at ([A-Za-z0-9][A-Za-z0-9\s&'()-]{1,40}?)\./i);
     const merchant = merchantMatch ? merchantMatch[1].trim() : 'Unknown Merchant';
 
+    let creditMerchant = 'Direct Credit';
+    if (body.toLowerCase().includes('woolworths')) {
+        creditMerchant = 'Woolworths';
+    } else {
+        const paidByMatch = body.match(/paid (?:by|from) ([A-Za-z][A-Za-z\s]{1,30}?)(?:\.|into| to)/i);
+        if (paidByMatch) creditMerchant = paidByMatch[1].trim();
+    }
+
     return {
         valid: true,
         type: isCredit ? 'credit' : 'debit',
         amount,
-        merchant: isCredit ? 'Woolworths' : merchant,
+        merchant: isCredit ? creditMerchant : merchant,
         date: new Date(notification.time).toISOString(),
         id: String(notification.time),
         raw: body,
