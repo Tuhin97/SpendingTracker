@@ -6,7 +6,7 @@ import { useLimits } from '../hooks/useLimits';
 import { formatCurrency, formatDate } from '../utils/formatCurrency';
 
 export default function DashboardScreen() {
-  const { transactions, getWeeklyTotal, getWeeklyCredits } = useTransactions();
+  const { transactions, load, getWeeklyTotal, getWeeklyCredits } = useTransactions();
   const { limit, savingsGoal } = useLimits();
 
   const weeklySpent = getWeeklyTotal();
@@ -16,10 +16,9 @@ export default function DashboardScreen() {
   const progress = limit ? (weeklySpent / limit) * 100 : 0;
   const recentTransactions = transactions.slice(0, 5);
 
-  useFocusEffect(
+    useFocusEffect(
     useCallback(() => {
-      // screen is focused, data refreshes automatically
-      // because hooks re-read from AsyncStorage
+      load();
     }, [])
   );
 

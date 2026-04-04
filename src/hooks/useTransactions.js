@@ -81,6 +81,6 @@ export function useTransactions() {
     await clearTransactions();
   }
 
-  return { transactions, addTransaction, clearTransactions, getWeeklyTotal, getWeeklyCredits, archiveAndReset };
+  return { transactions, load, addTransaction, clearTransactions, getWeeklyTotal, getWeeklyCredits, archiveAndReset };
 
 }
