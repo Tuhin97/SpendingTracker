@@ -1,9 +1,9 @@
-export function formatCurrency(amount, currency = 'INR') {
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(amount);
+export function formatCurrency(amount, currency = 'AUD') {
+  return new Intl.NumberFormat('en-AU', { style: 'currency', currency }).format(amount);
 }
 
 export function formatDate(isoString) {
-  return new Date(isoString).toLocaleDateString('en-IN', {
+  return new Date(isoString).toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
