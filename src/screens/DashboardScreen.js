@@ -7,7 +7,7 @@ import { formatCurrency, formatDate } from '../utils/formatCurrency';
 
 export default function DashboardScreen() {
   const { transactions, load, getWeeklyTotal, getWeeklyCredits } = useTransactions();
-  const { limit, savingsGoal } = useLimits();
+  const { limit, savingsGoal, loadLimits } = useLimits();
 
   const weeklySpent = getWeeklyTotal();
   const weeklyEarned = getWeeklyCredits();
@@ -16,9 +16,10 @@ export default function DashboardScreen() {
   const progress = limit ? (weeklySpent / limit) * 100 : 0;
   const recentTransactions = transactions.slice(0, 5);
 
-    useFocusEffect(
+  useFocusEffect(
     useCallback(() => {
       load();
+      loadLimits();
     }, [])
   );
 

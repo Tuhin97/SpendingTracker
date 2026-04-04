@@ -8,15 +8,16 @@ export function useLimits() {
   const [limit, setLimitState] = useState(null);
   const [savingsGoal, setSavingsGoalState] = useState(null);
 
-    useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((val) => {
-      if (val) setLimitState(parseFloat(val));
-    });
-    AsyncStorage.getItem(SAVINGS_KEY).then((val) => {
-      if (val) setSavingsGoalState(parseFloat(val));
-    });
+  useEffect(() => {
+    loadLimits();
   }, []);
 
+  async function loadLimits() {
+    const val = await AsyncStorage.getItem(STORAGE_KEY);
+    if (val) setLimitState(parseFloat(val));
+    const sval = await AsyncStorage.getItem(SAVINGS_KEY);
+    if (sval) setSavingsGoalState(parseFloat(sval));
+  }
   async function setLimit(value) {
     setLimitState(value);
     await AsyncStorage.setItem(STORAGE_KEY, String(value));
@@ -28,6 +29,6 @@ export function useLimits() {
   }
 
 
-  return { limit, setLimit, savingsGoal, setSavingsGoal };
+  return { limit, setLimit, savingsGoal, setSavingsGoal, loadLimits };
 
 }

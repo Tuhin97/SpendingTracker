@@ -1,11 +1,18 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTransactions } from '../hooks/useTransactions';
 import { formatCurrency, formatDate } from '../utils/formatCurrency';
 
 export default function TransactionHistoryScreen() {
-  const { transactions } = useTransactions();
+  const { transactions, load } = useTransactions();
   const [filter, setFilter] = useState('all');
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   const filtered = transactions.filter(txn => {
     if (filter === 'debits') return txn.type === 'debit';
