@@ -14,8 +14,7 @@
 
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useRef, useEffect } from 'react';
-import { sendLimitWarning } from '../utils/notifications';
+import { useCallback } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useLimits } from '../hooks/useLimits';
 import { formatCurrency, formatDate } from '../utils/formatCurrency';
@@ -43,31 +42,6 @@ export default function DashboardScreen() {
       loadLimits();
     }, [])
   );
-  
-  // useRef tracks whether we've already sent each alert this session.
-  // Without this, a notification would fire on every re-render once
-  // the threshold is crossed (every tab switch, every new transaction).
-  const notifiedRef = useRef({ warned: false, overlimit: false });
-
-  useEffect(() => {
-    // Don't fire if limit hasn't been set yet
-    if (!limit || progress === 0) return;
-
-    if (progress >= 100 && !notifiedRef.current.overlimit) {
-      // Only send the over-limit alert once
-      notifiedRef.current.overlimit = true;
-      sendLimitWarning(weeklySpent, limit, true);
-    } else if (progress >= 80 && progress < 100 && !notifiedRef.current.warned) {
-      // Only send the 80% warning once
-      notifiedRef.current.warned = true;
-      sendLimitWarning(weeklySpent, limit, false);
-    }
-
-    // If spending drops back below 80% (e.g. after clearing data), reset the flags
-    if (progress < 80) {
-      notifiedRef.current = { warned: false, overlimit: false };
-    }
-  }, [progress, limit]); // Re-evaluate whenever spending or limit changes
 
   return (
     <ScrollView style={styles.container}>
