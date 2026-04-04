@@ -7,7 +7,7 @@ export function parseNotification(notification) {
     if(!isCredit && !isDebit) 
         return {valid: false};
 
-    const amountMatch = body.match(/$(\d{1,6}(?:,\d{3})*(?:.\d{1,2})?)/);
+    const amountMatch = body.match(/\$(\d{1,6}(?:,\d{3})*(?:\.\d{1,2})?)/);
     const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
 
     if (!amount)
