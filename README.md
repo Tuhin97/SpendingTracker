@@ -86,13 +86,72 @@ eas login
 
 ### 4. Build the APK
 
+You have two options:
+
+#### Option A — EAS Cloud Build (easiest, 30 free builds/month)
+
 ```bash
 eas build --platform android --profile preview
 ```
 
-This will build a `.apk` file on Expo's cloud build servers. Once complete, download the APK from the link shown in the terminal.
+This builds on Expo's cloud servers. Once complete, download the APK from the link shown in the terminal. Takes 10–15 minutes the first time.
 
-> The first build takes around 10–15 minutes. Subsequent builds are faster.
+> The free plan allows 30 Android builds per month, resetting on the 1st of each month.
+
+#### Option B — Local Build (unlimited, no account needed)
+
+Builds the APK directly on your Mac. Requires Android Studio to be installed with the Android SDK.
+
+**Prerequisites:**
+- [Android Studio](https://developer.android.com/studio) installed
+- Android SDK installed via Android Studio
+- `ANDROID_HOME` set in your shell profile (`~/.zshrc` or `~/.bash_profile`):
+
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+
+**Connect your Android device wirelessly (recommended for Android 11+):**
+
+1. Enable Developer options: **Settings → About phone → Software information** → tap **Build number** 7 times
+2. Go to **Settings → Developer options → Wireless debugging → ON**
+3. Tap **"Pair device with pairing code"** and note the IP, port, and 6-digit code
+4. On your Mac terminal:
+```bash
+source ~/.zshrc && adb pair YOUR_IP:PAIRING_PORT
+# enter the 6-digit code when prompted
+```
+5. Then connect using the IP and port shown at the top of the Wireless debugging screen:
+```bash
+adb connect YOUR_IP:CONNECTION_PORT
+```
+6. Verify your device is connected:
+```bash
+adb devices
+# should show "device" not "unauthorized"
+```
+
+**Run the build:**
+
+```bash
+cd SpendingTracker && source ~/.zshrc && npx expo run:android --variant release
+```
+
+This takes 5–10 minutes the first time. The APK is installed automatically on your phone when done.
+
+**Find the APK file:**
+
+After building, the APK is saved at:
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+To find it in Finder: press **Cmd + Shift + G** and paste:
+```
+/path/to/SpendingTracker/android/app/build/outputs/apk/release
+```
 
 ### 5. Install on your Android device
 
