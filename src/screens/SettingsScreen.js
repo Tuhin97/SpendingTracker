@@ -1,3 +1,20 @@
+/**
+ * SettingsScreen.js
+ *
+ * Provides app management tools:
+ *
+ *   Archive This Week  - saves current week's transactions as a JSON file
+ *                        on the device, then resets the tracker for next week
+ *   Clear All Data     - permanently deletes all transactions (with confirmation)
+ *
+ *   Test Mode          - simulates CommBank notifications without needing real
+ *                        purchases. Calls handleNotification() directly so the
+ *                        exact same parsing and storage logic runs as with real
+ *                        notifications. Useful for verifying the app works.
+ *
+ *   Archived Weeks     - lists all week_YYYY-MM-DD.json files saved on device
+ */
+
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as FileSystem from 'expo-file-system';
@@ -9,43 +26,55 @@ export default function SettingsScreen() {
   const { clearTransactions, archiveAndReset } = useTransactions();
   const [archivedFiles, setArchivedFiles] = useState([]);
 
+  // Load the list of archived week files when the screen first mounts
   useEffect(() => {
     loadArchivedFiles();
   }, []);
 
+  // Reads the app's document directory and filters for week_*.json files.
+  // Files are sorted in reverse so the most recent week appears at the top.
   async function loadArchivedFiles() {
     const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory);
     const weekFiles = files.filter(f => f.startsWith('week_') && f.endsWith('.json'));
     setArchivedFiles(weekFiles.sort().reverse());
   }
+
+  // Shows a confirmation dialog before archiving to prevent accidental resets
   function handleArchive() {
-      Alert.alert(
-        'Archive This Week',
-        'This will save this week\'s data and reset the tracker. Continue?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Archive', onPress: async () => {
-            await archiveAndReset();
-            await loadArchivedFiles();
-          }},
-        ]
-      );
+    Alert.alert(
+      'Archive This Week',
+      'This will save this week\'s data and reset the tracker. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Archive', onPress: async () => {
+          await archiveAndReset();
+          // Refresh the archived files list so the new file shows immediately
+          await loadArchivedFiles();
+        }},
+      ]
+    );
   }
 
+  // Shows a destructive confirmation before wiping all data
   function handleClearAll() {
-      Alert.alert(
-        'Clear All Data',
-        'This will permanently delete all transactions. This cannot be undone!',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: async () => {
-            await clearTransactions();
-          }},
-        ]
-      );
+    Alert.alert(
+      'Clear All Data',
+      'This will permanently delete all transactions. This cannot be undone!',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: async () => {
+          await clearTransactions();
+        }},
+      ]
+    );
   }
 
-    async function testDebit() {
+  // --- Test Mode functions ---
+  // These simulate real CommBank notification text being received.
+  // time: Date.now() + 1/2 ensures each test transaction gets a unique ID
+  // (since the ID is the notification timestamp).
+
+  async function testDebit() {
     try {
       await handleNotification({
         text: '$45.00 spent at COLES SUPERMARKETS.',
@@ -60,8 +89,9 @@ export default function SettingsScreen() {
   async function testCredit() {
     try {
       await handleNotification({
+        // Simulates a Woolworths pay deposit notification
         text: 'You\'ve been paid $1000.00 into your account ending 6373.',
-        time: Date.now() + 1,
+        time: Date.now() + 1, // +1ms offset so it gets a unique ID from testDebit
       });
       Alert.alert('Test Complete', 'A $1000.00 credit has been added. Check History tab!');
     } catch (e) {
@@ -73,14 +103,13 @@ export default function SettingsScreen() {
     try {
       await handleNotification({
         text: '$750.00 spent at AMAZON AU.',
-        time: Date.now() + 2,
+        time: Date.now() + 2, // +2ms offset for a unique ID
       });
       Alert.alert('Test Complete', 'A $750.00 debit added. Check Dashboard to see limit warning!');
     } catch (e) {
       Alert.alert('Error', e.message);
     }
   }
-
 
   return (
     <ScrollView style={styles.container}>
@@ -108,6 +137,7 @@ export default function SettingsScreen() {
         <Text style={styles.buttonText}>⚠️ Test Limit Warning ($750)</Text>
       </TouchableOpacity>
 
+      {/* List of archived week files stored on this device */}
       <Text style={styles.sectionTitle}>Archived Weeks</Text>
 
       {archivedFiles.length === 0
@@ -147,6 +177,9 @@ const styles = StyleSheet.create({
   dangerButton: {
     backgroundColor: '#e53935',
   },
+  testButton: {
+    backgroundColor: '#0288d1',
+  },
   buttonText: {
     color: '#ffffff',
     fontSize: 16,
@@ -176,9 +209,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
   },
-
-    testButton: {
-    backgroundColor: '#0288d1',
-  }
-
 });

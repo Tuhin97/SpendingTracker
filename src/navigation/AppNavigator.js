@@ -1,5 +1,16 @@
-// Install required packages before using this file:
-// npx expo install @react-navigation/native @react-navigation/bottom-tabs react-native-screens react-native-safe-area-context
+/**
+ * AppNavigator.js
+ *
+ * Sets up the bottom tab navigation for the app.
+ * Each tab maps to a screen component. The NavigationContainer wraps
+ * everything and provides navigation context to all child screens.
+ *
+ * Tabs:
+ *   Dashboard  - weekly summary, progress bar, recent transactions
+ *   Set Limit  - configure weekly spend limit and savings goal
+ *   History    - full transaction list with All/Debits/Credits filter
+ *   Settings   - archive, clear data, and test buttons
+ */
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';

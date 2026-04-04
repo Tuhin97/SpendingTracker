@@ -1,3 +1,14 @@
+/**
+ * TransactionHistoryScreen.js
+ *
+ * Shows the full list of all transactions with a filter bar at the top.
+ * Filters: All | Debits | Credits
+ *
+ * Uses useFocusEffect to reload transactions every time the user switches
+ * to this tab, so new transactions (from notifications or test buttons)
+ * appear immediately without needing to restart the app.
+ */
+
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -6,39 +17,42 @@ import { formatCurrency, formatDate } from '../utils/formatCurrency';
 
 export default function TransactionHistoryScreen() {
   const { transactions, load } = useTransactions();
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('all'); // 'all' | 'debits' | 'credits'
 
+  // Reload transactions from storage every time this tab gains focus
   useFocusEffect(
     useCallback(() => {
       load();
     }, [])
   );
 
+  // Apply the active filter to the full transaction list
   const filtered = transactions.filter(txn => {
     if (filter === 'debits') return txn.type === 'debit';
     if (filter === 'credits') return txn.type === 'credit';
-    return true;
+    return true; // 'all' — no filter applied
   });
 
-    return (
+  return (
     <View style={styles.container}>
       <Text style={styles.title}>Transaction History</Text>
 
+      {/* Filter tab bar */}
       <View style={styles.filterRow}>
-        <TouchableOpacity 
-          style={[styles.filterBtn, filter === 'all' && styles.filterActive]} 
+        <TouchableOpacity
+          style={[styles.filterBtn, filter === 'all' && styles.filterActive]}
           onPress={() => setFilter('all')}>
           <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>All</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.filterBtn, filter === 'debits' && styles.filterActive]} 
+        <TouchableOpacity
+          style={[styles.filterBtn, filter === 'debits' && styles.filterActive]}
           onPress={() => setFilter('debits')}>
           <Text style={[styles.filterText, filter === 'debits' && styles.filterTextActive]}>Debits</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.filterBtn, filter === 'credits' && styles.filterActive]} 
+        <TouchableOpacity
+          style={[styles.filterBtn, filter === 'credits' && styles.filterActive]}
           onPress={() => setFilter('credits')}>
           <Text style={[styles.filterText, filter === 'credits' && styles.filterTextActive]}>Credits</Text>
         </TouchableOpacity>
@@ -53,6 +67,7 @@ export default function TransactionHistoryScreen() {
                 <Text style={styles.merchant}>{txn.merchant}</Text>
                 <Text style={styles.date}>{formatDate(txn.date)}</Text>
               </View>
+              {/* Colour-coded amount: green for credit, red for debit */}
               <Text style={[styles.amount, { color: txn.type === 'credit' ? '#43a047' : '#e53935' }]}>
                 {txn.type === 'credit' ? '+' : '-'}{formatCurrency(txn.amount)}
               </Text>
