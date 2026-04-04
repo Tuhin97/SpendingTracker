@@ -7,9 +7,22 @@
  */
 
 import { useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 import AppNavigator from './src/navigation/AppNavigator';
 import { startNotificationListener, stopNotificationListener, handleNotification } from './src/utils/backgroundTask';
 import { requestPermissions } from './src/utils/notifications';
+
+// REQUIRED: tells expo-notifications how to handle incoming notifications.
+// Without this, all scheduled notifications are silently dropped.
+// Must be set at the module level before any notification is sent.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,   // show the notification banner
+    shouldPlaySound: true,   // play the default sound
+    shouldSetBadge: false,   // don't change the app badge number
+  }),
+});
+
 
 export default function App() {
 

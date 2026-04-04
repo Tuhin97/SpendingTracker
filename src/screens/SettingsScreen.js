@@ -111,6 +111,29 @@ export default function SettingsScreen() {
     }
   }
 
+  async function checkListenerStatus() {
+  try {
+    let NotificationListener = null;
+    try {
+      NotificationListener = require('react-native-notification-listener').default;
+    } catch (e) {
+      Alert.alert('Listener Status', 'NotificationListener module failed to load: ' + e.message);
+      return;
+    }
+    const status = await NotificationListener.getPermissionStatus();
+    Alert.alert(
+      'Listener Status',
+      `Permission: ${status}\n\n${status === 'authorized'
+        ? '✅ Listener has permission. Make sure the app is not being killed by battery optimisation.'
+        : '❌ Permission not granted. Go to Settings → Special App Access → Notification Access → SpendingTracker → Allow'
+      }`
+    );
+  } catch (e) {
+    Alert.alert('Error', e.message);
+  }
+}
+
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Settings</Text>
@@ -136,6 +159,11 @@ export default function SettingsScreen() {
       <TouchableOpacity style={[styles.button, styles.testButton]} onPress={testLimitWarning}>
         <Text style={styles.buttonText}>⚠️ Test Limit Warning ($750)</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={[styles.button, styles.debugButton]} onPress={checkListenerStatus}>
+        <Text style={styles.buttonText}>🔍 Check Listener Status</Text>
+      </TouchableOpacity>
+
 
       {/* List of archived week files stored on this device */}
       <Text style={styles.sectionTitle}>Archived Weeks</Text>
@@ -209,4 +237,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
   },
+
+  debugButton: {
+  backgroundColor: '#37474f',
+},
 });
