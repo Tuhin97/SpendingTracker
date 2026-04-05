@@ -139,21 +139,6 @@ async function checkAndNotifyThresholds() {
  */
 export async function handleNotification(notification) {
 
-  // 🔍 DEBUG: save every raw notification so we can see if headless task fires at all
-  try {
-    const debugRaw = await AsyncStorage.getItem('@debug_raw_notifications');
-    const debugList = debugRaw ? JSON.parse(debugRaw) : [];
-    debugList.unshift({
-      receivedAt: new Date().toISOString(),
-      app: notification.app ?? null,
-      title: notification.title ?? null,
-      text: notification.text ?? null,
-      time: notification.time ?? null,
-    });
-    // keep only most recent 20
-    await AsyncStorage.setItem('@debug_raw_notifications', JSON.stringify(debugList.slice(0, 20)));
-  } catch (e) {}
-
   // Parse the raw notification text into a structured transaction object
   const parsed = parseNotification({
     text: notification.text ?? '',

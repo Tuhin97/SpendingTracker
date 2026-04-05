@@ -13,16 +13,9 @@ AppRegistry.registerHeadlessTask(
   RNAndroidNotificationListenerHeadlessJsName,
   () => async (taskData) => {
     try {
-      // 🔍 DEBUG: mark that the headless task actually ran
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem('@debug_last_headless_fire', new Date().toISOString());
-
       const notification = JSON.parse(taskData.notification);
       await handleNotification(notification);
-    } catch (e) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem('@debug_headless_error', String(e?.message ?? e));
-    }
+    } catch (e) {}
   }
 );
 
