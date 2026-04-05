@@ -10,7 +10,7 @@ A React Native (Expo) Android app that automatically reads CommBank Australia pu
 - **Weekly pay cycle** — resets every Tuesday (payday), tracking spending from Tuesday to Monday
 - **Weekly spend limit** — set a limit and see a live colour-coded progress bar (green → orange → red)
 - **Savings goal** — set a savings target and see whether you've hit it each week
-- **Spending alerts** — phone notification when you hit 80% and 100% of your limit
+- **Spending alerts** — push notifications when you hit 50%, 75%, 90%, and 100% of your limit
 - **Transaction history** — full list of all transactions with All / Debits / Credits filter
 - **Weekly archive** — export each week's data as a JSON file saved on the device
 - **Test mode** — simulate CommBank notifications without needing real purchases
@@ -98,7 +98,7 @@ This builds on Expo's cloud servers. Once complete, download the APK from the li
 
 > The free plan allows 30 Android builds per month, resetting on the 1st of each month.
 
-#### Option B — Local Build (unlimited, no account needed)
+#### Option B — Local Build on Mac (unlimited, no account needed)
 
 Builds the APK directly on your Mac. Requires Android Studio to be installed with the Android SDK.
 
@@ -113,6 +113,11 @@ export PATH=$PATH:$ANDROID_HOME/tools
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 ```
 
+Reload your shell after adding these:
+```bash
+source ~/.zshrc
+```
+
 **Connect your Android device wirelessly (recommended for Android 11+):**
 
 1. Enable Developer options: **Settings → About phone → Software information** → tap **Build number** 7 times
@@ -120,7 +125,7 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 3. Tap **"Pair device with pairing code"** and note the IP, port, and 6-digit code
 4. On your Mac terminal:
 ```bash
-source ~/.zshrc && adb pair YOUR_IP:PAIRING_PORT
+adb pair YOUR_IP:PAIRING_PORT
 # enter the 6-digit code when prompted
 ```
 5. Then connect using the IP and port shown at the top of the Wireless debugging screen:
@@ -152,6 +157,78 @@ To find it in Finder: press **Cmd + Shift + G** and paste:
 ```
 /path/to/SpendingTracker/android/app/build/outputs/apk/release
 ```
+
+---
+
+#### Option C — Local Build on Windows (unlimited, no account needed)
+
+**Prerequisites:**
+
+1. Install [Node.js](https://nodejs.org) (v18 or later) — download the Windows installer
+2. Install [Android Studio](https://developer.android.com/studio) — run the installer and make sure to tick **Android SDK** during setup
+3. Set environment variables:
+   - Press **Windows key → search "Environment Variables" → Edit the system environment variables**
+   - Under **System Variables**, click **New**:
+     - Variable name: `ANDROID_HOME`
+     - Variable value: `C:\Users\YOUR_USERNAME\AppData\Local\Android\Sdk`
+   - Find the **Path** variable → click **Edit** → click **New** and add:
+     ```
+     %ANDROID_HOME%\tools
+     %ANDROID_HOME%\platform-tools
+     ```
+   - Click OK on all dialogs
+4. Open a **new** Command Prompt or PowerShell window and verify:
+```cmd
+adb --version
+```
+If it prints a version number, you're set up correctly.
+
+**Install dependencies:**
+
+Open Command Prompt or PowerShell in the project folder:
+```cmd
+npm install
+```
+
+**Connect your Android device wirelessly (Android 11+):**
+
+1. Enable Developer options: **Settings → About phone → Software information** → tap **Build number** 7 times
+2. Go to **Settings → Developer options → Wireless debugging → ON**
+3. Tap **"Pair device with pairing code"** — note the IP, port, and 6-digit code
+4. In Command Prompt:
+```cmd
+adb pair YOUR_IP:PAIRING_PORT
+```
+Enter the 6-digit code when prompted.
+
+5. Then connect:
+```cmd
+adb connect YOUR_IP:CONNECTION_PORT
+```
+6. Verify:
+```cmd
+adb devices
+# should show "device" not "unauthorized"
+```
+
+**Run the build:**
+
+```cmd
+npx expo run:android --variant release
+```
+
+This takes 5–10 minutes the first time. The APK installs automatically on your phone when done.
+
+**Find the APK file:**
+
+After building, the APK is at:
+```
+android\app\build\outputs\apk\release\app-release.apk
+```
+
+To find it in File Explorer: press **Ctrl + L** in File Explorer, paste the path above (with your actual project location).
+
+> ⚠️ **Windows note:** If you see `'adb' is not recognized`, close and reopen your terminal after setting environment variables. If it still fails, check that `ANDROID_HOME` points to the correct SDK folder — it may vary depending on your Android Studio installation.
 
 ### 5. Install on your Android device
 
@@ -190,11 +267,12 @@ Open the app → tap **Set Limit** tab → enter your weekly spend limit and sav
 
 ## How It Works
 
-1. The app starts a `NotificationListenerService` when launched
-2. Every notification on the device is checked — only CommBank ones are processed
-3. CommBank notification text is parsed by `notificationParser.js` to extract the amount, merchant, and transaction type
-4. Valid transactions are saved to `AsyncStorage` on the device
-5. The Dashboard reads from storage every time you switch to it and displays the weekly summary
+1. The app registers a **Headless JS task** at startup — this runs even when the app is completely closed
+2. Android wakes up the task each time any notification arrives on the device
+3. The task immediately checks `notification.app` — if it isn't `com.commbank.netbank` it is discarded instantly
+4. CommBank notification text is parsed by `notificationParser.js` to extract the amount, merchant, and transaction type
+5. Valid transactions are saved to `AsyncStorage` on the device — only 5 clean fields (type, amount, merchant, date, id) — no raw text stored
+6. The Dashboard reads from storage every time you switch to it and displays the weekly summary
 
 ### Supported CommBank notification formats
 
@@ -225,11 +303,13 @@ The Settings screen has three test buttons that simulate real CommBank notificat
 
 | Button | Simulates |
 |---|---|
-| 🛒 Test Debit ($45 COLES) | A $45 purchase at Coles |
-| 💰 Test Credit ($1000 Pay) | A $1000 pay deposit |
-| ⚠️ Test Limit Warning ($750) | A $750 purchase to trigger limit alerts |
+| Test Debit | A $45 purchase at Coles |
+| Test Credit | A $1000 pay deposit |
+| Test Limit Warning | A $750 purchase to trigger limit alerts |
 
 After pressing a test button, switch to the **Dashboard** or **History** tab to see the result.
+
+> Note: Test buttons call `handleNotification()` directly and bypass the `com.commbank.netbank` package filter — they are for testing only.
 
 ---
 
@@ -363,21 +443,18 @@ export function formatCurrency(amount, currency = 'USD') {
 This app reads notifications from **CommBank Australia**. The filter is in `src/utils/backgroundTask.js`:
 
 ```js
-if (notification.app?.toLowerCase().includes('commbank') ||
-    notification.title?.toLowerCase().includes('commbank') ||
-    notification.text?.toLowerCase().includes('commbank')) {
+if (notification.app !== 'com.commbank.netbank') return;
 ```
 
-Replace `'commbank'` with a keyword from your bank's app name. For example:
+Replace `'com.commbank.netbank'` with your bank's Android package name. To find your bank's package name, install the debug version of the app, trigger a bank notification, and check the `app` field in the Debug Info screen (Settings → Show Debug Info). For example:
 
-| Bank | Replace with |
+| Bank | Package name |
 |---|---|
-| ANZ | `'anz'` |
-| NAB | `'nab'` |
-| Westpac | `'westpac'` |
-| ING | `'ing'` |
-| HSBC | `'hsbc'` |
-| Barclays | `'barclays'` |
+| CommBank | `com.commbank.netbank` |
+| ANZ | `com.anz.android` |
+| NAB | `au.com.nab.mobile` |
+| Westpac | `org.westpac.bank` |
+| ING | `au.com.ingdirect.android` |
 
 ---
 
@@ -466,9 +543,18 @@ Open `app.json` and update these two fields:
 ## Known Limitations
 
 - **Android only** — iOS does not allow reading other apps' notifications
-- **App must be running** — the listener only works while the app is alive in the background; if Android kills the process, new notifications won't be captured until the app is reopened
+- **Headless JS required** — the app uses a Headless JS task to capture notifications. Android must not have the app in "deep sleep" — set battery to Unrestricted to prevent this
 - **Past notifications are not captured** — only notifications that arrive while the listener is active are tracked
 - **Cloud sync not yet implemented** — archived JSON files are stored locally on the device only
+
+---
+
+## Security
+
+- **Only CommBank notifications are processed** — filtered by package name `com.commbank.netbank`. All other apps' notifications are discarded immediately.
+- **No raw notification text is stored** — only structured fields (type, amount, merchant, date, id) are saved.
+- **No network calls** — all data stays on the device. Nothing is sent to any server.
+- **AsyncStorage is unencrypted** — transaction data is stored in plain text. Anyone with physical access and ADB enabled could read it. For higher security, consider `react-native-encrypted-storage`.
 
 ---
 
@@ -477,3 +563,4 @@ Open `app.json` and update these two fields:
 - Cloud sync for weekly archives (upload JSON files to a remote server)
 - Cross-device integration (phone ↔ Mac)
 - Support for multiple bank accounts
+- Biometric lock (Face ID / fingerprint) to protect transaction data
