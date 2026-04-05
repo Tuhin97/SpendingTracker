@@ -41,14 +41,9 @@ export async function startNotificationListener(onNotification) {
     await NotificationListener.requestPermission();
   }
 
-  NotificationListener.startListening(notification => {
-    // Filter: only process CommBank notifications (by app name or text content)
-    if (notification.app?.toLowerCase().includes('commbank') ||
-        notification.title?.toLowerCase().includes('commbank') ||
-        notification.text?.toLowerCase().includes('commbank')) {
-      onNotification(notification);
-    }
-  });
+  // startListening activates the Android NotificationListenerService.
+  // Actual notification handling happens via the Headless JS task in index.js
+  NotificationListener.startListening();
 }
 
 /**
@@ -143,10 +138,26 @@ async function checkAndNotifyThresholds() {
  * NotificationListener so the Settings test buttons can call it directly.
  */
 export async function handleNotification(notification) {
+
+  // 🔍 DEBUG: save every raw notification so we can see if headless task fires at all
+  try {
+    const debugRaw = await AsyncStorage.getItem('@debug_raw_notifications');
+    const debugList = debugRaw ? JSON.parse(debugRaw) : [];
+    debugList.unshift({
+      receivedAt: new Date().toISOString(),
+      app: notification.app ?? null,
+      title: notification.title ?? null,
+      text: notification.text ?? null,
+      time: notification.time ?? null,
+    });
+    // keep only most recent 20
+    await AsyncStorage.setItem('@debug_raw_notifications', JSON.stringify(debugList.slice(0, 20)));
+  } catch (e) {}
+
   // Parse the raw notification text into a structured transaction object
   const parsed = parseNotification({
     text: notification.text ?? '',
-    time: notification.time ?? Date.now(),
+    time: notification.time ? parseInt(notification.time) : Date.now(),
   });
 
   // If the parser didn't recognise this as a valid transaction, do nothing
