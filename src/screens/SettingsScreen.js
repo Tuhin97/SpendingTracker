@@ -15,12 +15,12 @@
  *   Archived Weeks     - lists all week_YYYY-MM-DD.json files saved on device
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Button } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as FileSystem from 'expo-file-system';
 import { useTransactions } from '../hooks/useTransactions';
 import { handleNotification } from '../utils/backgroundTask';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen() {
   const { clearTransactions, archiveAndReset } = useTransactions();
@@ -112,25 +112,52 @@ export default function SettingsScreen() {
   }
 
   async function checkListenerStatus() {
-  try {
-    let NotificationListener = null;
     try {
-      NotificationListener = require('react-native-notification-listener').default;
+      let NotificationListener = null;
+      try {
+        NotificationListener = require('react-native-notification-listener').default;
+      } catch (e) {
+        Alert.alert('Listener Status', 'NotificationListener module failed to load: ' + e.message);
+        return;
+      }
+      const status = await NotificationListener.getPermissionStatus();
+      Alert.alert(
+        'Listener Status',
+        `Permission: ${status}\n\n${status === 'authorized'
+          ? '✅ Listener has permission. Make sure the app is not being killed by battery optimisation.'
+          : '❌ Permission not granted. Go to Settings → Special App Access → Notification Access → SpendingTracker → Allow'
+        }`
+      );
     } catch (e) {
-      Alert.alert('Listener Status', 'NotificationListener module failed to load: ' + e.message);
-      return;
+      Alert.alert('Error', e.message);
     }
-    const status = await NotificationListener.getPermissionStatus();
-    Alert.alert(
-      'Listener Status',
-      `Permission: ${status}\n\n${status === 'authorized'
-        ? '✅ Listener has permission. Make sure the app is not being killed by battery optimisation.'
-        : '❌ Permission not granted. Go to Settings → Special App Access → Notification Access → SpendingTracker → Allow'
-      }`
-    );
-  } catch (e) {
-    Alert.alert('Error', e.message);
   }
+
+  async function showLastNotification() {
+    try {
+      const raw = await AsyncStorage.getItem('@debug_last_notification');
+      if (!raw) {
+        Alert.alert('No Notifications Yet', 'No notifications have been received since the app started. Try sending a message or getting any notification on your phone.');
+        return;
+      }
+      const n = JSON.parse(raw);
+      Alert.alert(
+        'Last Received Notification',
+        `App: ${n.app}\nTitle: ${n.title}\nText: ${n.text}\nTime: ${new Date(n.time).toLocaleTimeString()}`
+      );
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
+  }
+
+  async function showDebugInfo() {
+  const fired = await AsyncStorage.getItem('@debug_last_headless_fire');
+  const err = await AsyncStorage.getItem('@debug_headless_error');
+  const raw = await AsyncStorage.getItem('@debug_raw_notifications');
+  Alert.alert(
+    'Debug Info',
+    `Last headless fire: ${fired ?? 'NEVER'}\n\nLast error: ${err ?? 'none'}\n\nRaw notifications:\n${raw ?? '[]'}`
+  );
 }
 
 
@@ -164,6 +191,11 @@ export default function SettingsScreen() {
         <Text style={styles.buttonText}>🔍 Check Listener Status</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity style={[styles.button, styles.debugButton]} onPress={showLastNotification}>
+        <Text style={styles.buttonText}>📋 Show Last Notification</Text>
+      </TouchableOpacity>
+
+      <Button title="Show Debug Info" onPress={showDebugInfo} />
 
       {/* List of archived week files stored on this device */}
       <Text style={styles.sectionTitle}>Archived Weeks</Text>
