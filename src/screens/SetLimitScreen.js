@@ -4,151 +4,241 @@
  * Lets the user configure two values that drive the Dashboard:
  *
  *   Weekly Spend Limit  - the maximum they want to spend in a pay week.
- *                         The progress bar on the Dashboard tracks against this.
- *
- *   Weekly Savings Goal - how much they want to save. Must be less than
- *                         the spend limit (you can't save more than your limit).
- *                         The Dashboard shows whether this goal has been reached.
- *
- * Values are saved to AsyncStorage via useLimits() so they persist across
- * app restarts. The Dashboard reloads them on every tab focus via loadLimits().
+ *   Weekly Savings Goal - how much they want to save.
  */
 
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { useLimits } from '../hooks/useLimits';
 
 export default function SetLimitScreen() {
   const { limit, savingsGoal, setLimit, setSavingsGoal } = useLimits();
 
-  // Pre-fill the inputs with whatever is already saved (if anything)
   const [limitInput, setLimitInput] = useState(limit ? String(limit) : '');
   const [savingsInput, setSavingsInput] = useState(savingsGoal ? String(savingsGoal) : '');
-
-  // Controls the "✅ Saved successfully!" message — shows for 3 seconds after saving
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
-  /**
-   * handleSave
-   *
-   * Validates both inputs before saving. Rules:
-   *   1. Spend limit must be a positive number
-   *   2. Savings goal must be a positive number
-   *   3. Savings goal must be LESS than the spend limit
-   *      (e.g. limit $500, goal $200 — you save $200 by spending only $300)
-   *
-   * If all checks pass, both values are saved to AsyncStorage and a brief
-   * success message is shown for 3 seconds.
-   */
   async function handleSave() {
+    setError('');
     const limitValue = parseFloat(limitInput);
     const savingsValue = parseFloat(savingsInput);
 
-    // Check that the spend limit is a valid positive number
     if (isNaN(limitValue) || limitValue <= 0) {
-      Alert.alert('Invalid Limit', 'Please enter a valid spend limit.');
+      setError('Please enter a valid spend limit.');
       return;
     }
-
-    // Check that the savings goal is a valid positive number
     if (isNaN(savingsValue) || savingsValue <= 0) {
-      Alert.alert('Invalid Goal', 'Please enter a valid savings goal.');
+      setError('Please enter a valid savings goal.');
       return;
     }
-
-    // Savings goal must be less than the spend limit — otherwise there's
-    // nothing left to spend, which doesn't make sense
     if (savingsValue >= limitValue) {
-      Alert.alert('Invalid Goal', 'Savings goal must be less than your spend limit.');
+      setError('Savings goal must be less than your spend limit.');
       return;
     }
 
-    // Persist both values to AsyncStorage via the useLimits hook
     await setLimit(limitValue);
     await setSavingsGoal(savingsValue);
-
-    // Show the success message, then hide it after 3 seconds
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Set Your Limits</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
-      <Text style={styles.label}>Weekly Spend Limit ($)</Text>
-      <TextInput
-        style={styles.input}
-        value={limitInput}
-        onChangeText={setLimitInput}
-        keyboardType="numeric"
-        placeholder="e.g. 800"
-      />
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Set Your Limits</Text>
+        <Text style={styles.headerSub}>Control your weekly spending and savings</Text>
+      </View>
 
-      <Text style={styles.label}>Weekly Savings Goal ($)</Text>
-      <TextInput
-        style={styles.input}
-        value={savingsInput}
-        onChangeText={setSavingsInput}
-        keyboardType="numeric"
-        placeholder="e.g. 200"
-      />
+      {/* Spend Limit input card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="wallet-outline" size={22} color="#6200ee" />
+          <Text style={styles.cardTitle}>Weekly Spend Limit</Text>
+        </View>
+        <Text style={styles.cardDesc}>
+          The maximum you want to spend each week. The dashboard tracks your progress against this.
+        </Text>
+        <View style={styles.inputRow}>
+          <Text style={styles.dollar}>$</Text>
+          <TextInput
+            style={styles.input}
+            value={limitInput}
+            onChangeText={setLimitInput}
+            keyboardType="numeric"
+            placeholder="e.g. 800"
+            placeholderTextColor="#bdbdbd"
+          />
+        </View>
+      </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Save</Text>
+      {/* Savings Goal input card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="trending-up-outline" size={22} color="#6200ee" />
+          <Text style={styles.cardTitle}>Weekly Savings Goal</Text>
+        </View>
+        <Text style={styles.cardDesc}>
+          How much you want to save this week. Must be less than your spend limit.
+        </Text>
+        <View style={styles.inputRow}>
+          <Text style={styles.dollar}>$</Text>
+          <TextInput
+            style={styles.input}
+            value={savingsInput}
+            onChangeText={setSavingsInput}
+            keyboardType="numeric"
+            placeholder="e.g. 200"
+            placeholderTextColor="#bdbdbd"
+          />
+        </View>
+      </View>
+
+      {/* Error message */}
+      {error !== '' && (
+        <View style={styles.errorBadge}>
+          <Ionicons name="alert-circle" size={16} color="#ffffff" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      {/* Save button */}
+      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+        <Ionicons name="checkmark-circle-outline" size={22} color="#ffffff" />
+        <Text style={styles.saveButtonText}>Save Limits</Text>
       </TouchableOpacity>
 
-      {/* Only rendered for 3 seconds after a successful save */}
-      {saved && <Text style={styles.success}>✅ Saved successfully!</Text>}
+      {/* Success message */}
+      {saved && (
+        <View style={styles.successBadge}>
+          <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
+          <Text style={styles.successText}>Saved successfully!</Text>
+        </View>
+      )}
 
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 24,
+    backgroundColor: '#f0f0f7',
   },
-  title: {
+  header: {
+    backgroundColor: '#6200ee',
+    paddingTop: 60,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 20,
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#212121',
-    marginTop: 40,
-    marginBottom: 32,
+    color: '#ffffff',
   },
-  label: {
-    fontSize: 16,
-    color: '#757575',
+  headerSub: {
+    fontSize: 13,
+    color: '#ce93d8',
+    marginTop: 4,
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 18,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 18,
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#212121',
-    marginBottom: 24,
-    elevation: 2,
   },
-  button: {
-    backgroundColor: '#6200ee',
-    borderRadius: 12,
-    padding: 16,
+  cardDesc: {
+    fontSize: 13,
+    color: '#9e9e9e',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  inputRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    elevation: 2,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    paddingHorizontal: 14,
   },
-  buttonText: {
+  dollar: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#6200ee',
+    marginRight: 6,
+  },
+  input: {
+    flex: 1,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#212121',
+    paddingVertical: 14,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#6200ee',
+    borderRadius: 16,
+    padding: 18,
+    marginHorizontal: 16,
+    marginTop: 8,
+    elevation: 3,
+  },
+  saveButtonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  success: {
-    color: '#43a047',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 24,
+  errorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#e53935',
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  errorText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  successBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#43a047',
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  successText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
