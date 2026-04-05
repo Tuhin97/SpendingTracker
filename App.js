@@ -31,12 +31,9 @@ export default function App() {
     // This shows the Android permission dialog on first launch.
     requestPermissions();
 
-    // Start listening for CommBank notifications when the app mounts.
-    // Every matching notification is passed to handleNotification(),
-    // which parses it and saves it to AsyncStorage.
-    startNotificationListener(async (notification) => {
-      await handleNotification(notification);
-    });
+    // Start the background notification listener service, which runs even when the app is closed.
+    startNotificationListener();
+
 
     // Cleanup: stop the listener when the app is closed or unmounted
     // to avoid memory leaks or ghost listeners running in the background.
