@@ -55,6 +55,5 @@ export function parseNotification(notification) {
         date: new Date(notification.time).toISOString(),
         // Use the notification timestamp as a unique ID to prevent duplicate entries
         id: String(notification.time),
-        raw: body, // Keep raw text for debugging
     };
 }

@@ -139,6 +139,9 @@ async function checkAndNotifyThresholds() {
  */
 export async function handleNotification(notification) {
 
+  // Only process CommBank notifications — ignore everything else
+  if (notification.app !== 'com.commbank.netbank') return;
+  
   // Parse the raw notification text into a structured transaction object
   const parsed = parseNotification({
     text: notification.text ?? '',
