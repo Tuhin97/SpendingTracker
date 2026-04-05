@@ -105,7 +105,7 @@ export default function SettingsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
-        <Text style={styles.headerSub}>Manage your data and test the app</Text>
+        <Text style={styles.headerSub}>Manage your data</Text>
       </View>
 
       {/* Data management */}
